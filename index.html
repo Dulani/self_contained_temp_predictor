@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Series Predictor</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Vega-Lite for plotting -->
+    <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+    <!-- Simple-Statistics for linear regression -->
+    <script src="https://unpkg.com/simple-statistics@7.8.3/dist/simple-statistics.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Time Series Data Predictor</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <label for="datetime">Date/Time:</label>
+                <input type="datetime-local" id="datetime" required>
+            </div>
+            
+            <div class="input-group">
+                <label for="value">Value:</label>
+                <input type="number" id="value" step="any" required>
+            </div>
+            
+            <button id="add-data">Add Data Point</button>
+        </div>
+
+        <div class="visualization-section">
+            <div id="plot"></div>
+        </div>
+
+        <div class="actions-section">
+            <button id="export-csv">Export CSV</button>
+            <button id="predict">Show Prediction</button>
+        </div>
+
+        <div id="prediction-info" class="prediction-info hidden">
+            <h3>Predictions</h3>
+            <p id="future-value"></p>
+            <p id="target-time"></p>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
