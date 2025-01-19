@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set current date and time in the input
     const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const offset = now.getTimezoneOffset();
+    now.setMinutes(now.getMinutes() - offset); // Convert to local time
     document.getElementById('datetime').value = now.toISOString().slice(0, 16);
 });
 
@@ -25,8 +26,14 @@ document.getElementById('add-data').addEventListener('click', () => {
         return;
     }
 
+    // Ensure proper date parsing
+    const dateParts = datetime.split('T');
+    const [year, month, day] = dateParts[0].split('-');
+    const [hours, minutes] = dateParts[1].split(':');
+    const dateObj = new Date(year, month - 1, day, hours, minutes);
+    
     timeSeriesData.push({
-        time: new Date(datetime).getTime(),
+        time: dateObj.getTime(),
         value: value
     });
 
@@ -74,13 +81,18 @@ document.getElementById('predict').addEventListener('click', () => {
     const xValues = timeSeriesData.map(d => d.time);
     const yValues = timeSeriesData.map(d => d.value);
 
-    // Calculate linear regression
-    const regression = ss.linearRegression(xValues.map((x, i) => [x, yValues[i]]));
+    // Normalize time values for regression (convert to hours from first data point)
+    const firstTime = xValues[0];
+    const normalizedX = xValues.map(x => (x - firstTime) / (60 * 60 * 1000)); // Convert to hours
+    
+    // Calculate linear regression with normalized values
+    const regression = ss.linearRegression(normalizedX.map((x, i) => [x, yValues[i]]));
     
     // Calculate future value (24 hours ahead)
     const lastTime = xValues[xValues.length - 1];
     const futureTime = lastTime + (24 * 60 * 60 * 1000); // 24 hours in milliseconds
-    const futureValue = regression.m * futureTime + regression.b;
+    const normalizedFutureTime = (futureTime - firstTime) / (60 * 60 * 1000);
+    const futureValue = regression.m * normalizedFutureTime + regression.b;
 
     // Update prediction info
     document.getElementById('future-value').textContent = 
@@ -88,10 +100,20 @@ document.getElementById('predict').addEventListener('click', () => {
 
     // Calculate when a specific value will be reached
     const targetValue = Math.max(...yValues) * 1.5; // Example: 50% higher than max value
-    const targetTime = (targetValue - regression.b) / regression.m;
+    const hoursToTarget = (targetValue - regression.b) / regression.m;
+    const targetTime = new Date(firstTime + (hoursToTarget * 60 * 60 * 1000));
+    
+    // Format date properly
+    const dateOptions = { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        hour: '2-digit', 
+        minute: '2-digit'
+    };
     
     document.getElementById('target-time').textContent = 
-        `Estimated time to reach ${targetValue.toFixed(2)}: ${new Date(targetTime).toLocaleString()}`;
+        `Estimated time to reach ${targetValue.toFixed(2)}: ${targetTime.toLocaleDateString(undefined, dateOptions)}`;
 
     updatePlot(regression);
 });
@@ -135,9 +157,10 @@ function updatePlot(regression = null) {
 
     // Add regression line if available
     if (regression) {
+        const firstTime = timeSeriesData[0].time;
         const regressionData = timeSeriesData.map(d => ({
             time: new Date(d.time).toISOString(),
-            predicted: regression.m * d.time + regression.b
+            predicted: regression.m * ((d.time - firstTime) / (60 * 60 * 1000)) + regression.b
         }));
 
         // Add future point
@@ -145,7 +168,7 @@ function updatePlot(regression = null) {
         const futureTime = lastTime + (24 * 60 * 60 * 1000);
         regressionData.push({
             time: new Date(futureTime).toISOString(),
-            predicted: regression.m * futureTime + regression.b
+            predicted: regression.m * ((futureTime - firstTime) / (60 * 60 * 1000)) + regression.b
         });
 
         spec.layer.push({
@@ -153,7 +176,11 @@ function updatePlot(regression = null) {
             "mark": {"type": "line", "color": "red"},
             "encoding": {
                 "x": {"field": "time", "type": "temporal"},
-                "y": {"field": "predicted", "type": "quantitative"}
+                "y": {"field": "predicted", "type": "quantitative"},
+                "tooltip": [
+                    {"field": "time", "type": "temporal", "title": "Time"},
+                    {"field": "predicted", "type": "quantitative", "title": "Predicted"}
+                ]
             }
         });
     }
