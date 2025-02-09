@@ -96,28 +96,38 @@ document.getElementById('add-data').addEventListener('click', () => {
     }
 
     // Parse and validate date
-    const date = new Date(datetime);
-    if (isNaN(date.getTime())) {
+    const [datePart, timePart] = datetime.split('T');
+    if (!datePart || !timePart) {
         alert('Invalid date format. Please use YYYY-MM-DDTHH:mm format.');
         return;
     }
+
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+
+    // Create date using UTC to avoid timezone issues
+    const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
     
-    // Convert to UTC and validate range
-    const utcDate = new Date(Date.UTC(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        date.getHours(),
-        date.getMinutes()
-    ));
-    
-    if (utcDate.getFullYear() < 1970 || utcDate.getFullYear() > 3000) {
+    // Validate date components
+    if (isNaN(utcDate.getTime()) || 
+        year < 1970 || year > 3000 || 
+        month < 1 || month > 12 || 
+        day < 1 || day > 31 || 
+        hours < 0 || hours > 23 || 
+        minutes < 0 || minutes > 59) {
         alert('Invalid date. Please enter a valid date between 1970 and 3000.');
         return;
     }
     
     // Format date for display using our helper function
     const formattedDate = formatDateForInput(utcDate);
+    
+    console.log('Date parsing:', {
+        input: datetime,
+        components: { year, month, day, hours, minutes },
+        utcDate: utcDate.toISOString(),
+        formattedDate
+    });
     
     // Create UTC timestamp in milliseconds since epoch
     const timestamp = utcDate.getTime();
