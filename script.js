@@ -76,34 +76,31 @@ document.getElementById('add-data').addEventListener('click', () => {
     }
 
     // Parse and validate date
-    if (!datetime.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
+    const date = new Date(datetime);
+    if (isNaN(date.getTime())) {
         alert('Invalid date format. Please use YYYY-MM-DDTHH:mm format.');
         return;
     }
     
-    const [datePart, timePart] = datetime.split('T');
-    const [year, month, day] = datePart.split('-').map(Number);
-    const [hours, minutes] = timePart.split(':').map(Number);
+    // Convert to UTC and validate range
+    const utcDate = new Date(Date.UTC(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+        date.getHours(),
+        date.getMinutes()
+    ));
     
-    // Create date using UTC to avoid timezone issues
-    const date = new Date(Date.UTC(year, month - 1, day, hours, minutes));
-    
-    // Validate date components
-    if (isNaN(date.getTime()) || 
-        year < 1970 || year > 3000 || 
-        month < 1 || month > 12 || 
-        day < 1 || day > 31 || 
-        hours < 0 || hours > 23 || 
-        minutes < 0 || minutes > 59) {
+    if (utcDate.getFullYear() < 1970 || utcDate.getFullYear() > 3000) {
         alert('Invalid date. Please enter a valid date between 1970 and 3000.');
         return;
     }
     
-    // Format date for display
-    const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    // Format date for display using our helper function
+    const formattedDate = formatDateForInput(utcDate);
     
-    // Create timestamp in milliseconds since epoch
-    const timestamp = date.getTime();
+    // Create UTC timestamp in milliseconds since epoch
+    const timestamp = utcDate.getTime();
     
     // Check if this timestamp already exists
     if (timeSeriesData.some(d => d.time === timestamp)) {
@@ -113,7 +110,11 @@ document.getElementById('add-data').addEventListener('click', () => {
     
     // Validate timestamp is within reasonable range
     const now = new Date();
-    const fiveYearsFromNow = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate());
+    const fiveYearsFromNow = new Date(Date.UTC(
+        now.getUTCFullYear() + 5,
+        now.getUTCMonth(),
+        now.getUTCDate()
+    ));
     if (timestamp > fiveYearsFromNow.getTime()) {
         alert('Please enter a date within the next 5 years.');
         return;
@@ -121,22 +122,18 @@ document.getElementById('add-data').addEventListener('click', () => {
     
     console.log('Date validation:', {
         input: datetime,
-        parsed: {
-            year, month, day,
-            hours, minutes
-        },
+        utcDate: utcDate.toISOString(),
         timestamp,
-        utc: date.toISOString()
+        formattedDate
     });
     
     console.log('Adding data point:', {
         inputDateTime: datetime,
-        parsedDate: date.toISOString(),
+        utcDate: utcDate.toISOString(),
         timestamp,
         value,
         validationChecks: {
-            year: date.getFullYear(),
-            isValid: !isNaN(date.getTime()),
+            isValid: !isNaN(timestamp),
             isFuture: timestamp > now.getTime(),
             isWithinRange: timestamp <= fiveYearsFromNow.getTime()
         }
@@ -144,7 +141,7 @@ document.getElementById('add-data').addEventListener('click', () => {
     
     timeSeriesData.push({
         time: timestamp,
-        value: value
+        value: Number(value)
     });
 
     // Sort data by time
