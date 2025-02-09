@@ -47,30 +47,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set initial date and verify it's valid
     const datetimeInput = document.getElementById('datetime');
     datetimeInput.value = dateString;
-    datetimeInput.defaultValue = dateString;  // Set default value to maintain format
     datetimeInput.min = '1970-01-01T00:00';
     datetimeInput.max = '2999-12-31T23:59';
     
-    // Update datetime input when user changes it
-    datetimeInput.addEventListener('input', (e) => {
-        const [datePart, timePart] = e.target.value.split('T');
-        if (!datePart || !timePart) return;
-
-        const [year, month, day] = datePart.split('-').map(Number);
-        const [hours, minutes] = timePart.split(':').map(Number);
-
-        // Create date using UTC to avoid timezone issues
-        const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
-        
-        if (!isNaN(utcDate.getTime())) {
-            const formattedDate = formatDateForInput(utcDate);
-            e.target.value = formattedDate;
-            
-            console.log('Datetime input updated:', {
-                rawValue: e.target.value,
-                formattedDate,
-                utcDate: utcDate.toISOString()
-            });
+    // Log initial date setup
+    console.log('Initial date setup:', {
+        date: initialDate.toISOString(),
+        formattedString: dateString,
+        inputValue: datetimeInput.value,
+        utcComponents: {
+            year: initialDate.getUTCFullYear(),
+            month: initialDate.getUTCMonth() + 1,
+            day: initialDate.getUTCDate(),
+            hours: initialDate.getUTCHours(),
+            minutes: initialDate.getUTCMinutes()
         }
     });
     
@@ -113,8 +103,17 @@ document.addEventListener('DOMContentLoaded', () => {
 // Add data point
 document.getElementById('add-data').addEventListener('click', () => {
     const datetimeInput = document.getElementById('datetime');
-    const datetime = datetimeInput.getAttribute('value') || datetimeInput.value;
+    const datetime = datetimeInput.value;  // Always use value property for form inputs
     const value = parseFloat(document.getElementById('value').value);
+    
+    console.log('Add data point clicked:', {
+        rawDatetime: datetime,
+        inputElement: {
+            value: datetimeInput.value,
+            type: datetimeInput.type,
+            currentValue: datetime
+        }
+    });
     
     console.log('Add data point clicked:', {
         rawDatetime: datetime,
