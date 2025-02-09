@@ -491,15 +491,31 @@ function updatePlot(regression = null, regressionLine = null) {
     // Calculate time domain focusing on actual data range
     let domainStart, domainEnd;
     
+    console.log('Time series data before domain calculation:', {
+        points: timeSeriesData.map(d => ({
+            time: new Date(d.time).toISOString(),
+            value: d.value
+        })),
+        count: timeSeriesData.length
+    });
+    
     if (timeSeriesData.length === 0) {
         // If no data, show last 24 hours
         const now = new Date();
         domainEnd = now;
         domainStart = new Date(now.getTime() - (24 * 60 * 60 * 1000));
     } else {
-        const times = timeSeriesData.map(d => d.time);
+        // Extract timestamps and ensure they're numbers
+        const times = timeSeriesData.map(d => Number(d.time));
         const minTime = Math.min(...times);
         const maxTime = Math.max(...times);
+        
+        console.log('Time range calculation:', {
+            timestamps: times.map(t => new Date(t).toISOString()),
+            minTime: new Date(minTime).toISOString(),
+            maxTime: new Date(maxTime).toISOString(),
+            timeRange: (maxTime - minTime) / (60 * 60 * 1000) + ' hours'
+        });
         
         // Add padding and future time for predictions
         const paddingTime = 2 * 60 * 60 * 1000; // 2 hours padding
