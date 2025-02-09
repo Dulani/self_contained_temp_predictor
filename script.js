@@ -90,8 +90,18 @@ document.addEventListener('DOMContentLoaded', () => {
 // Add data point
 document.getElementById('add-data').addEventListener('click', () => {
     const datetimeInput = document.getElementById('datetime');
-    const datetime = datetimeInput.value;
+    const datetime = datetimeInput.getAttribute('value') || datetimeInput.value;
     const value = parseFloat(document.getElementById('value').value);
+    
+    console.log('Add data point clicked:', {
+        rawDatetime: datetime,
+        inputElement: {
+            value: datetimeInput.value,
+            defaultValue: datetimeInput.defaultValue,
+            attributeValue: datetimeInput.getAttribute('value'),
+            type: datetimeInput.type
+        }
+    });
     
     console.log('Add data point clicked:', {
         rawDatetime: datetime,
