@@ -98,7 +98,10 @@ document.getElementById('add-data').addEventListener('click', () => {
     }
 
     // Parse and validate date
-    const [datePart, timePart] = datetime.split('T');
+    const datetimeInput = document.getElementById('datetime');
+    const inputValue = datetimeInput.value;
+    
+    const [datePart, timePart] = inputValue.split('T');
     if (!datePart || !timePart) {
         alert('Invalid date format. Please use YYYY-MM-DDTHH:mm format.');
         return;
@@ -109,6 +112,22 @@ document.getElementById('add-data').addEventListener('click', () => {
 
     // Create date using UTC to avoid timezone issues
     const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+    
+    console.log('Datetime input processing:', {
+        originalInput: datetime,
+        inputValue,
+        elementValue: datetimeInput.value,
+        formattedDate: formatDateForInput(utcDate),
+        components: { year, month, day, hours, minutes },
+        utcDate: utcDate.toISOString()
+    });
+    
+    console.log('Parsed datetime components:', {
+        datePart,
+        timePart,
+        components: { year, month, day, hours, minutes },
+        utcDate: utcDate.toISOString()
+    });
     
     // Validate date components
     if (isNaN(utcDate.getTime()) || 
