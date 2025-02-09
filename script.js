@@ -52,8 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Set initial value and constraints
-    datetimeInput.setAttribute('value', dateString);  // Set value attribute
-    datetimeInput.value = dateString;                // Set value property
+    datetimeInput.value = dateString;                // Set value property first
+    datetimeInput.setAttribute('value', dateString);  // Then set value attribute
+    datetimeInput.setAttribute('min', '1970-01-01T00:00');
+    datetimeInput.setAttribute('max', '2999-12-31T23:59');
     datetimeInput.min = '1970-01-01T00:00';
     datetimeInput.max = '2999-12-31T23:59';
     
