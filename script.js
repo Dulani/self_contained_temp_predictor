@@ -724,17 +724,18 @@ function updatePlot(regression = null, regressionLine = null) {
         
         console.log('Regression data generation:', {
             firstTime: new Date(firstTime).toISOString(),
-            lastTime: new Date(lastTime).toISOString(),
+            lastDataTime: new Date(lastDataTime).toISOString(),
             futureTime: new Date(futureTime).toISOString(),
             timeIncrement,
             timeIncrementHours: timeIncrement / (60 * 60 * 1000)
         });
         
-        // Generate regression data points
+        // Generate regression data points with improved error handling
         const regressionData = [];
         let validPoints = 0;
         let invalidPoints = 0;
         
+        // Generate points for regression line visualization
         for (let i = 0; i <= numSamples; i++) {
             const t = firstTime + i * timeIncrement;
             const predicted = regressionLine(t);
@@ -747,8 +748,24 @@ function updatePlot(regression = null, regressionLine = null) {
                     predicted: predicted
                 });
                 validPoints++;
+                
+                // Log every 100th point for debugging
+                if (i % 100 === 0) {
+                    console.log('Regression point:', {
+                        index: i,
+                        time: validDate.toISOString(),
+                        predicted,
+                        normalizedTime: (t - firstTime) / (60 * 60 * 1000)
+                    });
+                }
             } else {
                 invalidPoints++;
+                console.warn('Invalid regression point:', {
+                    index: i,
+                    time: t,
+                    predicted,
+                    validDate
+                });
             }
         }
         
