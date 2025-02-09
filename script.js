@@ -45,11 +45,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateString = formatDateForInput(initialDate);
     
     // Initialize datetime input with current value
-    const datetimeInput = document.getElementById('datetime');
+    const datetimeInput = document.querySelector('.datetime-input');
     if (!datetimeInput) {
         console.error('Could not find datetime input');
         return;
     }
+    
+    // Log the input element details for debugging
+    console.log('Datetime input element:', {
+        element: datetimeInput,
+        id: datetimeInput.id,
+        class: datetimeInput.className,
+        type: datetimeInput.type,
+        attributes: Array.from(datetimeInput.attributes).map(attr => ({
+            name: attr.name,
+            value: attr.value
+        }))
+    });
     
     // Set initial value and constraints
     datetimeInput.value = dateString;                // Set value property first
