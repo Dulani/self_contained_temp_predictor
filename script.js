@@ -51,21 +51,21 @@ document.addEventListener('DOMContentLoaded', () => {
     datetimeInput.max = '2999-12-31T23:59';
     
     // Add event listener to ensure date format is maintained
-    datetimeInput.addEventListener('change', (e) => {
-        const date = new Date(e.target.value);
-        if (!isNaN(date.getTime())) {
-            const utcDate = new Date(Date.UTC(
-                date.getFullYear(),
-                date.getMonth(),
-                date.getDate(),
-                date.getHours(),
-                date.getMinutes()
-            ));
+    datetimeInput.addEventListener('input', (e) => {
+        const [datePart, timePart] = e.target.value.split('T');
+        if (!datePart || !timePart) return;
+
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes] = timePart.split(':').map(Number);
+
+        // Create date using UTC to avoid timezone issues
+        const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+        
+        if (!isNaN(utcDate.getTime())) {
             e.target.value = formatDateForInput(utcDate);
             
             console.log('Date input changed:', {
                 inputValue: e.target.value,
-                parsedDate: date.toISOString(),
                 utcDate: utcDate.toISOString(),
                 formattedValue: formatDateForInput(utcDate)
             });
