@@ -73,9 +73,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Add event listener to ensure date format is maintained
+    // Add event listeners to handle datetime input changes
+    datetimeInput.addEventListener('input', (e) => {
+        const value = e.target.value;
+        if (!value) return;
+        
+        console.log('Datetime input changed:', {
+            value,
+            type: e.target.type,
+            event: 'input'
+        });
+    });
+    
     datetimeInput.addEventListener('change', (e) => {
-        const [datePart, timePart] = e.target.value.split('T');
+        const value = e.target.value;
+        if (!value) return;
+        
+        const [datePart, timePart] = value.split('T');
         if (!datePart || !timePart) return;
 
         const [year, month, day] = datePart.split('-').map(Number);
@@ -87,11 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isNaN(utcDate.getTime())) {
             const formattedDate = formatDateForInput(utcDate);
             e.target.value = formattedDate;
+            e.target.setAttribute('value', formattedDate);
             
             console.log('Date input changed:', {
-                inputValue: e.target.value,
+                value,
+                formattedDate,
                 utcDate: utcDate.toISOString(),
-                formattedValue: formatDateForInput(utcDate)
+                event: 'change'
             });
         }
     });
