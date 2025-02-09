@@ -54,7 +54,21 @@ document.addEventListener('DOMContentLoaded', () => {
     datetimeInput.addEventListener('change', (e) => {
         const date = new Date(e.target.value);
         if (!isNaN(date.getTime())) {
-            e.target.value = formatDateForInput(date);
+            const utcDate = new Date(Date.UTC(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate(),
+                date.getHours(),
+                date.getMinutes()
+            ));
+            e.target.value = formatDateForInput(utcDate);
+            
+            console.log('Date input changed:', {
+                inputValue: e.target.value,
+                parsedDate: date.toISOString(),
+                utcDate: utcDate.toISOString(),
+                formattedValue: formatDateForInput(utcDate)
+            });
         }
     });
     
