@@ -102,7 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add data point
 document.getElementById('add-data').addEventListener('click', () => {
-    const datetimeInput = document.getElementById('datetime');
+    // Get datetime input by querying for datetime-local type since ID might be missing
+    const datetimeInput = document.querySelector('input[type="datetime-local"]');
     const datetime = datetimeInput.value;  // Always use value property for form inputs
     const value = parseFloat(document.getElementById('value').value);
     
