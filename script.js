@@ -50,6 +50,11 @@ document.getElementById('add-data').addEventListener('click', () => {
     }
 
     // Parse and validate date
+    if (!datetime.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/)) {
+        alert('Invalid date format. Please use YYYY-MM-DDTHH:mm format.');
+        return;
+    }
+    
     const [datePart, timePart] = datetime.split('T');
     const [year, month, day] = datePart.split('-').map(Number);
     const [hours, minutes] = timePart.split(':').map(Number);
@@ -67,6 +72,9 @@ document.getElementById('add-data').addEventListener('click', () => {
         alert('Invalid date. Please enter a valid date between 1970 and 3000.');
         return;
     }
+    
+    // Format date for display
+    const formattedDate = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
     
     // Create timestamp in milliseconds since epoch
     const timestamp = date.getTime();
@@ -124,8 +132,17 @@ document.getElementById('add-data').addEventListener('click', () => {
     
     // Clear value input and increment datetime by 15 minutes for next point
     document.getElementById('value').value = '';
+    
+    // Calculate next date using UTC to maintain consistency
     const nextDate = new Date(date.getTime() + 15 * 60 * 1000);
-    const nextDateString = nextDate.toISOString().slice(0, 16);
+    const nextYear = nextDate.getUTCFullYear();
+    const nextMonth = String(nextDate.getUTCMonth() + 1).padStart(2, '0');
+    const nextDay = String(nextDate.getUTCDate()).padStart(2, '0');
+    const nextHours = String(nextDate.getUTCHours()).padStart(2, '0');
+    const nextMinutes = String(nextDate.getUTCMinutes()).padStart(2, '0');
+    
+    // Format next date string in YYYY-MM-DDTHH:mm format
+    const nextDateString = `${nextYear}-${nextMonth}-${nextDay}T${nextHours}:${nextMinutes}`;
     document.getElementById('datetime').value = nextDateString;
     
     console.log('Data point added:', {
