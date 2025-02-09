@@ -61,7 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Initial date setup:', {
         date: initialDate.toISOString(),
         formattedString: dateString,
-        components: { year, month, day, hours, minutes }
+        utcComponents: {
+            year: initialDate.getUTCFullYear(),
+            month: initialDate.getUTCMonth() + 1,
+            day: initialDate.getUTCDate(),
+            hours: initialDate.getUTCHours(),
+            minutes: initialDate.getUTCMinutes()
+        }
     });
 });
 
