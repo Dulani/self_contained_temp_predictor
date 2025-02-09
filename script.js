@@ -93,6 +93,24 @@ document.getElementById('export-csv').addEventListener('click', () => {
     document.body.removeChild(link);
 });
 
+// Clear data
+document.getElementById('clear-data').addEventListener('click', () => {
+    if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+        // Clear data from localStorage
+        localStorage.removeItem('timeSeriesData');
+        
+        // Reset application state
+        timeSeriesData = [];
+        
+        // Reset prediction info if visible
+        const predictionInfo = document.getElementById('prediction-info');
+        predictionInfo.classList.add('hidden');
+        
+        // Update visualization
+        updatePlot();
+    }
+});
+
 // Show prediction
 document.getElementById('predict').addEventListener('click', () => {
     if (timeSeriesData.length < 2) {
