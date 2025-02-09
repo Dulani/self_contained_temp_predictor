@@ -51,6 +51,29 @@ document.addEventListener('DOMContentLoaded', () => {
     datetimeInput.min = '1970-01-01T00:00';
     datetimeInput.max = '2999-12-31T23:59';
     
+    // Update datetime input when user changes it
+    datetimeInput.addEventListener('input', (e) => {
+        const [datePart, timePart] = e.target.value.split('T');
+        if (!datePart || !timePart) return;
+
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes] = timePart.split(':').map(Number);
+
+        // Create date using UTC to avoid timezone issues
+        const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+        
+        if (!isNaN(utcDate.getTime())) {
+            const formattedDate = formatDateForInput(utcDate);
+            e.target.value = formattedDate;
+            
+            console.log('Datetime input updated:', {
+                rawValue: e.target.value,
+                formattedDate,
+                utcDate: utcDate.toISOString()
+            });
+        }
+    });
+    
     // Add event listener to ensure date format is maintained
     datetimeInput.addEventListener('change', (e) => {
         const [datePart, timePart] = e.target.value.split('T');
