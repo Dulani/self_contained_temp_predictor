@@ -1,6 +1,16 @@
 // Data storage
 let timeSeriesData = [];
 
+// Helper function to format dates for datetime-local input
+const formatDateForInput = (date) => {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 // Create tooltip element
 const tooltip = document.createElement('div');
 tooltip.id = 'custom-tooltip';
@@ -30,16 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const now = new Date();
     // Use a fixed date in 2025 for testing
     const initialDate = new Date(Date.UTC(2025, 1, 9, 18, 32)); // Feb 9, 2025, 18:32 UTC
-    
-    // Format date string manually to ensure correct format
-    const formatDateForInput = (date) => {
-        const year = date.getUTCFullYear();
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const hours = String(date.getUTCHours()).padStart(2, '0');
-        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
-    };
     
     // Create properly formatted date string
     const dateString = formatDateForInput(initialDate);
