@@ -32,20 +32,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialDate = new Date(Date.UTC(2025, 1, 9, 18, 32)); // Feb 9, 2025, 18:32 UTC
     
     // Format date string manually to ensure correct format
-    const year = initialDate.getUTCFullYear();
-    const month = String(initialDate.getUTCMonth() + 1).padStart(2, '0');
-    const day = String(initialDate.getUTCDate()).padStart(2, '0');
-    const hours = String(initialDate.getUTCHours()).padStart(2, '0');
-    const minutes = String(initialDate.getUTCMinutes()).padStart(2, '0');
+    const formatDateForInput = (date) => {
+        const year = date.getUTCFullYear();
+        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(date.getUTCDate()).padStart(2, '0');
+        const hours = String(date.getUTCHours()).padStart(2, '0');
+        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
     
     // Create properly formatted date string
-    const dateString = `${year}-${month}-${day}T${hours}:${minutes}`;
+    const dateString = formatDateForInput(initialDate);
     
     // Set initial date and verify it's valid
     const datetimeInput = document.getElementById('datetime');
     datetimeInput.value = dateString;
     datetimeInput.min = '1970-01-01T00:00';
     datetimeInput.max = '2999-12-31T23:59';
+    
+    // Add event listener to ensure date format is maintained
+    datetimeInput.addEventListener('change', (e) => {
+        const date = new Date(e.target.value);
+        if (!isNaN(date.getTime())) {
+            e.target.value = formatDateForInput(date);
+        }
+    });
     
     console.log('Initial date setup:', {
         date: initialDate.toISOString(),
