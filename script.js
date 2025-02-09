@@ -52,21 +52,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Set initial value and constraints
-    datetimeInput.defaultValue = dateString;  // Set default value first
-    datetimeInput.value = dateString;         // Then set current value
+    datetimeInput.value = dateString;
     datetimeInput.min = '1970-01-01T00:00';
     datetimeInput.max = '2999-12-31T23:59';
-    
-    // Store initial value in a data attribute for reference
-    datetimeInput.setAttribute('data-initial-value', dateString);
     
     // Log initial date setup
     console.log('Initial date setup:', {
         date: initialDate.toISOString(),
         formattedString: dateString,
         inputValue: datetimeInput.value,
-        defaultValue: datetimeInput.defaultValue,
-        dataValue: datetimeInput.getAttribute('data-initial-value'),
         utcComponents: {
             year: initialDate.getUTCFullYear(),
             month: initialDate.getUTCMonth() + 1,
@@ -74,16 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
             hours: initialDate.getUTCHours(),
             minutes: initialDate.getUTCMinutes()
         }
-    });
-    
-    // Update datetime input when it changes
-    datetimeInput.addEventListener('input', (e) => {
-        const newValue = e.target.value;
-        console.log('Datetime input changed:', {
-            newValue,
-            defaultValue: e.target.defaultValue,
-            dataValue: e.target.getAttribute('data-initial-value')
-        });
     });
     
     // Add event listener to ensure date format is maintained
@@ -129,49 +113,14 @@ document.getElementById('add-data').addEventListener('click', () => {
     const datetime = datetimeInput.value;  // Always use value property for form inputs
     const value = parseFloat(document.getElementById('value').value);
 
-    // Log all input state for debugging
-    console.log('Add data point state:', {
-        datetimeInput: {
-            value: datetimeInput.value,
-            defaultValue: datetimeInput.defaultValue,
-            dataValue: datetimeInput.getAttribute('data-initial-value'),
-            type: datetimeInput.type,
-            min: datetimeInput.min,
-            max: datetimeInput.max
-        },
-        parsedValue: value,
-        timeSeriesData: timeSeriesData.map(d => ({
+    // Log input state for debugging
+    console.log('Add data point clicked:', {
+        datetime,
+        value,
+        currentTimeSeriesData: timeSeriesData.map(d => ({
             time: new Date(d.time).toISOString(),
             value: d.value
         }))
-    });
-    
-    console.log('Add data point clicked:', {
-        rawDatetime: datetime,
-        inputElement: {
-            value: datetimeInput.value,
-            type: datetimeInput.type,
-            currentValue: datetime
-        }
-    });
-    
-    console.log('Add data point clicked:', {
-        rawDatetime: datetime,
-        inputElement: {
-            value: datetimeInput.value,
-            defaultValue: datetimeInput.defaultValue,
-            attributeValue: datetimeInput.getAttribute('value'),
-            type: datetimeInput.type
-        }
-    });
-    
-    console.log('Add data point clicked:', {
-        rawDatetime: datetime,
-        inputElement: {
-            value: datetimeInput.value,
-            defaultValue: datetimeInput.defaultValue,
-            type: datetimeInput.type
-        }
     });
 
     if (!datetime || isNaN(value)) {
