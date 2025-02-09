@@ -46,9 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Set initial date and verify it's valid
     const datetimeInput = document.getElementById('datetime');
-    datetimeInput.value = dateString;
-    datetimeInput.min = '1970-01-01T00:00';
-    datetimeInput.max = '2999-12-31T23:59';
+    datetimeInput.setAttribute('value', dateString);
+    datetimeInput.setAttribute('min', '1970-01-01T00:00');
+    datetimeInput.setAttribute('max', '2999-12-31T23:59');
     
     // Add event listener to ensure date format is maintained
     datetimeInput.addEventListener('change', (e) => {
