@@ -44,8 +44,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create properly formatted date string
     const dateString = formatDateForInput(initialDate);
     
-    // Set initial date and verify it's valid
-    const datetimeInput = document.getElementById('datetime');
+    // Initialize datetime input with current value
+    const datetimeInput = document.querySelector('input[type="datetime-local"]');
+    if (!datetimeInput) {
+        console.error('Could not find datetime input');
+        return;
+    }
+    
+    // Set initial value and constraints
     datetimeInput.value = dateString;
     datetimeInput.min = '1970-01-01T00:00';
     datetimeInput.max = '2999-12-31T23:59';
@@ -62,6 +68,14 @@ document.addEventListener('DOMContentLoaded', () => {
             hours: initialDate.getUTCHours(),
             minutes: initialDate.getUTCMinutes()
         }
+    });
+    
+    // Update datetime input when it changes
+    datetimeInput.addEventListener('change', (e) => {
+        console.log('Datetime input changed:', {
+            newValue: e.target.value,
+            oldValue: dateString
+        });
     });
     
     // Add event listener to ensure date format is maintained
