@@ -29,14 +29,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set current date and time in the input (ensure valid initial date)
     const now = new Date();
     // Use a fixed date in 2025 for testing
-    const initialDate = new Date(2025, 1, 9, 18, 32); // Feb 9, 2025, 18:32
-    const dateString = initialDate.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+    const initialDate = new Date(Date.UTC(2025, 1, 9, 18, 32)); // Feb 9, 2025, 18:32 UTC
+    
+    // Format date string manually to ensure correct format
+    const year = initialDate.getUTCFullYear();
+    const month = String(initialDate.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(initialDate.getUTCDate()).padStart(2, '0');
+    const hours = String(initialDate.getUTCHours()).padStart(2, '0');
+    const minutes = String(initialDate.getUTCMinutes()).padStart(2, '0');
+    
+    // Create properly formatted date string
+    const dateString = `${year}-${month}-${day}T${hours}:${minutes}`;
     
     // Set initial date and verify it's valid
     const datetimeInput = document.getElementById('datetime');
     datetimeInput.value = dateString;
     datetimeInput.min = '1970-01-01T00:00';
     datetimeInput.max = '2999-12-31T23:59';
+    
+    console.log('Initial date setup:', {
+        date: initialDate.toISOString(),
+        formattedString: dateString,
+        components: { year, month, day, hours, minutes }
+    });
 });
 
 // Add data point
@@ -581,10 +596,13 @@ function updatePlot(regression = null, regressionLine = null) {
                 y: spec.layer[0].encoding.y
             },
             regressionLayer: {
-                x: regressionLayer.layer[0].encoding.x,
-                y: regressionLayer.layer[0].encoding.y
+                x: regressionLayer.encoding.x,
+                y: regressionLayer.encoding.y
             },
-            regressionData: regressionData.slice(0, 3)
+            regressionData: regressionData.slice(0, 3),
+            scalesMatch: 
+                JSON.stringify(spec.layer[0].encoding.x.scale) === 
+                JSON.stringify(regressionLayer.encoding.x.scale)
         });
         
         spec.layer.push(regressionLayer);
