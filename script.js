@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateString = formatDateForInput(initialDate);
     
     // Initialize datetime input with current value
-    const datetimeInput = document.querySelector('.datetime-input');
+    const datetimeInput = document.getElementById('datetime');
     if (!datetimeInput) {
         console.error('Could not find datetime input');
         return;
@@ -55,8 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Datetime input element:', {
         element: datetimeInput,
         id: datetimeInput.id,
-        class: datetimeInput.className,
         type: datetimeInput.type,
+        value: datetimeInput.value,
+        defaultValue: datetimeInput.defaultValue,
         attributes: Array.from(datetimeInput.attributes).map(attr => ({
             name: attr.name,
             value: attr.value
@@ -139,8 +140,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add data point
 document.getElementById('add-data').addEventListener('click', () => {
-    // Get datetime input using querySelector for more reliable selection
-    const datetimeInput = document.querySelector('.datetime-input');
+    // Get datetime input using getElementById for consistent selection
+    const datetimeInput = document.getElementById('datetime');
     if (!datetimeInput) {
         console.error('Could not find datetime input');
         return;
@@ -149,6 +150,18 @@ document.getElementById('add-data').addEventListener('click', () => {
     // Get input values directly when button is clicked
     const datetime = datetimeInput.value;
     const value = parseFloat(document.getElementById('value').value);
+    
+    console.log('Add data point clicked:', {
+        datetimeInput: {
+            element: datetimeInput,
+            value: datetime,
+            attributes: Array.from(datetimeInput.attributes).map(attr => ({
+                name: attr.name,
+                value: attr.value
+            }))
+        },
+        valueInput: value
+    });
     
     console.log('Add data point clicked:', {
         datetimeInput: {
