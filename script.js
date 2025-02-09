@@ -128,6 +128,23 @@ document.getElementById('add-data').addEventListener('click', () => {
     const datetimeInput = document.querySelector('input[type="datetime-local"]');
     const datetime = datetimeInput.value;  // Always use value property for form inputs
     const value = parseFloat(document.getElementById('value').value);
+
+    // Log all input state for debugging
+    console.log('Add data point state:', {
+        datetimeInput: {
+            value: datetimeInput.value,
+            defaultValue: datetimeInput.defaultValue,
+            dataValue: datetimeInput.getAttribute('data-initial-value'),
+            type: datetimeInput.type,
+            min: datetimeInput.min,
+            max: datetimeInput.max
+        },
+        parsedValue: value,
+        timeSeriesData: timeSeriesData.map(d => ({
+            time: new Date(d.time).toISOString(),
+            value: d.value
+        }))
+    });
     
     console.log('Add data point clicked:', {
         rawDatetime: datetime,
@@ -216,6 +233,18 @@ document.getElementById('add-data').addEventListener('click', () => {
     
     // Create UTC timestamp in milliseconds since epoch
     const timestamp = utcDate.getTime();
+    
+    console.log('Creating timestamp:', {
+        utcDate: utcDate.toISOString(),
+        timestamp,
+        components: {
+            year,
+            month,
+            day,
+            hours,
+            minutes
+        }
+    });
     
     // Check if this timestamp already exists
     if (timeSeriesData.some(d => d.time === timestamp)) {
