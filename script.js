@@ -106,6 +106,18 @@ document.getElementById('clear-data').addEventListener('click', () => {
         const predictionInfo = document.getElementById('prediction-info');
         predictionInfo.classList.add('hidden');
         
+        // Remove any existing hover listeners
+        const plotArea = document.querySelector('.marks');
+        if (plotArea) {
+            plotArea.replaceWith(plotArea.cloneNode(true));
+        }
+        
+        // Reset datetime input to current time
+        const now = new Date();
+        const dateString = now.toISOString().slice(0, 16);
+        document.getElementById('datetime').value = dateString;
+        document.getElementById('value').value = '';
+        
         // Update visualization
         updatePlot();
     }
@@ -162,14 +174,23 @@ document.getElementById('predict').addEventListener('click', () => {
 // Update Vega-Lite plot
 function updatePlot(regression = null, regressionLine = null) {
     // Calculate time domain focusing on actual data range
-    const times = timeSeriesData.map(d => d.time);
-    const minTime = Math.min(...times);
-    const maxTime = Math.max(...times);
+    let domainStart, domainEnd;
     
-    // Add padding (2 hours before and after)
-    const paddingTime = 2 * 60 * 60 * 1000;
-    const domainStart = new Date(minTime - paddingTime);
-    const domainEnd = new Date(maxTime + (regression ? 24 * 60 * 60 * 1000 : 0) + paddingTime);
+    if (timeSeriesData.length === 0) {
+        // If no data, show last 24 hours
+        const now = new Date();
+        domainEnd = now;
+        domainStart = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+    } else {
+        const times = timeSeriesData.map(d => d.time);
+        const minTime = Math.min(...times);
+        const maxTime = Math.max(...times);
+        
+        // Add padding (2 hours before and after)
+        const paddingTime = 2 * 60 * 60 * 1000;
+        domainStart = new Date(minTime - paddingTime);
+        domainEnd = new Date(maxTime + (regression ? 24 * 60 * 60 * 1000 : 0) + paddingTime);
+    }
     
     const spec = {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
