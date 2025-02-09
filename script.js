@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     datetimeInput.max = '2999-12-31T23:59';
     
     // Add event listener to ensure date format is maintained
-    datetimeInput.addEventListener('input', (e) => {
+    datetimeInput.addEventListener('change', (e) => {
         const [datePart, timePart] = e.target.value.split('T');
         if (!datePart || !timePart) return;
 
@@ -62,7 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes));
         
         if (!isNaN(utcDate.getTime())) {
-            e.target.value = formatDateForInput(utcDate);
+            const formattedDate = formatDateForInput(utcDate);
+            e.target.value = formattedDate;
             
             console.log('Date input changed:', {
                 inputValue: e.target.value,
@@ -531,10 +532,11 @@ function updatePlot(regression = null, regressionLine = null) {
     };
 
     // Add regression line if available
-    if (regression) {
-        // Generate dense interpolation for regression line with hover support
-        const firstTime = timeSeriesData[0].time;
-        const lastTime = timeSeriesData[timeSeriesData.length - 1].time;
+    if (regression && regressionLine) {
+        // Use timestamps from regression calculation for consistency
+        const times = timeSeriesData.map(d => d.time);
+        const firstTime = Math.min(...times);
+        const lastTime = Math.max(...times);
         const futureTime = lastTime + (24 * 60 * 60 * 1000);
         
         const numSamples = 1000; // Increased for even smoother interaction
