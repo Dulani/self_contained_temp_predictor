@@ -26,10 +26,17 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePlot();
     }
 
-    // Set current date and time in the input
+    // Set current date and time in the input (ensure valid initial date)
     const now = new Date();
-    const dateString = now.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
-    document.getElementById('datetime').value = dateString;
+    // Use a fixed date in 2025 for testing
+    const initialDate = new Date(2025, 1, 9, 18, 32); // Feb 9, 2025, 18:32
+    const dateString = initialDate.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+    
+    // Set initial date and verify it's valid
+    const datetimeInput = document.getElementById('datetime');
+    datetimeInput.value = dateString;
+    datetimeInput.min = '1970-01-01T00:00';
+    datetimeInput.max = '2999-12-31T23:59';
 });
 
 // Add data point
@@ -42,21 +49,64 @@ document.getElementById('add-data').addEventListener('click', () => {
         return;
     }
 
-    // Parse date and ensure it's in the correct timezone
-    const date = new Date(datetime);
-    if (isNaN(date.getTime())) {
-        alert('Invalid date format');
+    // Parse and validate date
+    const [datePart, timePart] = datetime.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hours, minutes] = timePart.split(':').map(Number);
+    
+    // Create date using UTC to avoid timezone issues
+    const date = new Date(Date.UTC(year, month - 1, day, hours, minutes));
+    
+    // Validate date components
+    if (isNaN(date.getTime()) || 
+        year < 1970 || year > 3000 || 
+        month < 1 || month > 12 || 
+        day < 1 || day > 31 || 
+        hours < 0 || hours > 23 || 
+        minutes < 0 || minutes > 59) {
+        alert('Invalid date. Please enter a valid date between 1970 and 3000.');
         return;
     }
     
-    // Adjust for timezone to ensure consistent timestamps
-    const timestamp = Date.UTC(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-        date.getHours(),
-        date.getMinutes()
-    );
+    // Create timestamp in milliseconds since epoch
+    const timestamp = date.getTime();
+    
+    // Check if this timestamp already exists
+    if (timeSeriesData.some(d => d.time === timestamp)) {
+        alert('A data point already exists for this time. Please choose a different time.');
+        return;
+    }
+    
+    // Validate timestamp is within reasonable range
+    const now = new Date();
+    const fiveYearsFromNow = new Date(now.getFullYear() + 5, now.getMonth(), now.getDate());
+    if (timestamp > fiveYearsFromNow.getTime()) {
+        alert('Please enter a date within the next 5 years.');
+        return;
+    }
+    
+    console.log('Date validation:', {
+        input: datetime,
+        parsed: {
+            year, month, day,
+            hours, minutes
+        },
+        timestamp,
+        utc: date.toISOString()
+    });
+    
+    console.log('Adding data point:', {
+        inputDateTime: datetime,
+        parsedDate: date.toISOString(),
+        timestamp,
+        value,
+        validationChecks: {
+            year: date.getFullYear(),
+            isValid: !isNaN(date.getTime()),
+            isFuture: timestamp > now.getTime(),
+            isWithinRange: timestamp <= fiveYearsFromNow.getTime()
+        }
+    });
     
     timeSeriesData.push({
         time: timestamp,
@@ -72,8 +122,18 @@ document.getElementById('add-data').addEventListener('click', () => {
     // Update visualization
     updatePlot();
     
-    // Clear input fields
+    // Clear value input and increment datetime by 15 minutes for next point
     document.getElementById('value').value = '';
+    const nextDate = new Date(date.getTime() + 15 * 60 * 1000);
+    const nextDateString = nextDate.toISOString().slice(0, 16);
+    document.getElementById('datetime').value = nextDateString;
+    
+    console.log('Data point added:', {
+        currentPoints: timeSeriesData.map(d => ({
+            time: new Date(d.time).toISOString(),
+            value: d.value
+        }))
+    });
 });
 
 // Export CSV
@@ -133,26 +193,165 @@ document.getElementById('predict').addEventListener('click', () => {
     const predictionInfo = document.getElementById('prediction-info');
     predictionInfo.classList.remove('hidden');
 
-    // Prepare data for regression
+    // Prepare and validate data for regression
+    console.log('Raw time series data:', timeSeriesData);
+    
     const xValues = timeSeriesData.map(d => d.time);
     const yValues = timeSeriesData.map(d => d.value);
-
-    // Use milliseconds since epoch for regression
-    const points = xValues.map((x, i) => [x, yValues[i]]);
-    const regression = ss.linearRegression(points);
     
-    // Create regression line function that works with timestamps
-    const regressionLine = timestamp => regression.m * timestamp + regression.b;
+    console.log('Input data:', {
+        timestamps: xValues.map(t => new Date(t).toISOString()),
+        values: yValues,
+        timeRange: (Math.max(...xValues) - Math.min(...xValues)) / (60 * 60 * 1000) + ' hours'
+    });
+
+    // Verify we have at least two different timestamps
+    const uniqueTimes = new Set(xValues);
+    if (uniqueTimes.size < 2) {
+        alert('Need at least 2 different time points for prediction');
+        return;
+    }
+
+    // Normalize timestamps for regression to prevent numerical precision issues
+    const firstTimestamp = Math.min(...xValues);
+    const lastTimestamp = Math.max(...xValues);
+    
+    // Ensure we have a valid time range
+    if (lastTimestamp === firstTimestamp) {
+        alert('Time points must be different for prediction');
+        return;
+    }
+    
+    // Convert to hours for better numerical stability and ensure numeric values
+    const timeScale = 60 * 60 * 1000; // milliseconds to hours
+    const normalizedX = xValues.map(x => (x - firstTimestamp) / timeScale);
+    const numericY = yValues.map(y => Number(y));
+    
+    // Create regression points as [x, y] pairs for simple-statistics
+    const points = normalizedX.map((x, i) => [Number(x), Number(numericY[i])]);
+    
+    // Store time normalization info for later use
+    const timeNormalization = {
+        offset: firstTimestamp,
+        scale: timeScale
+    };
+    
+    // Verify regression input data
+    const validPoints = points.every(([x, y]) => 
+        !isNaN(x) && isFinite(x) && !isNaN(y) && isFinite(y)
+    );
+    
+    console.log('Regression input data:', {
+        originalPoints: timeSeriesData.map(d => ({
+            time: new Date(d.time).toISOString(),
+            value: d.value
+        })),
+        normalizedPoints: points,
+        timeRange: {
+            start: new Date(firstTimestamp).toISOString(),
+            end: new Date(lastTimestamp).toISOString(),
+            hours: (lastTimestamp - firstTimestamp) / timeScale
+        },
+        validPoints
+    });
+    
+    if (!validPoints) {
+        console.error('Invalid regression points:', points);
+        alert('Error: Invalid data for regression calculation');
+        return;
+    }
+    
+    // Validate regression input data
+    const validInput = points.every(point => 
+        point.length === 2 && 
+        !isNaN(point[0]) && 
+        isFinite(point[0]) && 
+        !isNaN(point[1]) && 
+        isFinite(point[1])
+    );
+    
+    if (!validInput) {
+        console.error('Invalid regression input data:', points);
+        alert('Error: Invalid data for regression calculation');
+        return;
+    }
+    
+    // Verify we have at least two different x values
+    const uniqueX = new Set(points.map(p => p[0]));
+    if (uniqueX.size < 2) {
+        console.error('Need at least two different x values for regression');
+        alert('Error: Need at least two different time points for regression');
+        return;
+    }
+    
+    console.log('Regression input:', {
+        points,
+        uniqueXValues: Array.from(uniqueX).sort(),
+        timeRangeHours: Math.max(...points.map(p => p[0])) - Math.min(...points.map(p => p[0]))
+    });
+    
+    // Calculate regression using simple-statistics
+    const regression = ss.linearRegression(points);
+    const regressionFunc = ss.linearRegressionLine(regression);
+    
+    console.log('Regression model:', {
+        points,
+        slope: regression.m,
+        intercept: regression.b,
+        equation: `y = ${regression.m.toFixed(4)}x + ${regression.b.toFixed(4)}`
+    });
+    
+    // Create regression line function that works with normalized timestamps
+    const regressionLine = timestamp => {
+        // Convert timestamp to hours using stored normalization
+        const normalizedTime = (timestamp - timeNormalization.offset) / timeNormalization.scale;
+        
+        // Use simple-statistics regression function to predict value
+        const predicted = regressionFunc(normalizedTime);
+        
+        // Validate prediction
+        if (isNaN(predicted) || !isFinite(predicted)) {
+            console.error('Invalid prediction:', {
+                timestamp: new Date(timestamp).toISOString(),
+                normalizedTime,
+                predicted,
+                equation: `y = ${regression.m.toFixed(4)}x + ${regression.b.toFixed(4)}`
+            });
+            return null;
+        }
+        
+        console.log('Regression prediction:', {
+            timestamp: new Date(timestamp).toISOString(),
+            normalizedTime,
+            predicted,
+            equation: `${regression.m.toFixed(4)} * ${normalizedTime.toFixed(4)} + ${regression.b.toFixed(4)} = ${predicted.toFixed(4)}`
+        });
+        
+        return predicted;
+    };
     
     // Calculate future value (24 hours ahead)
-    const lastTime = xValues[xValues.length - 1];
-    const futureTime = lastTime + (24 * 60 * 60 * 1000); // 24 hours in milliseconds
+    const futureTime = lastTimestamp + (24 * 60 * 60 * 1000); // 24 hours in milliseconds
     const futureValue = regressionLine(futureTime);
-    console.log('Regression data:', {
-        points,
-        regression,
-        futureTime,
-        futureValue
+    
+    // Verify regression calculation is working
+    const currentValue = regressionLine(lastTimestamp);
+    console.log('Regression verification:', {
+        currentValue,
+        futureValue,
+        timeDiff: (futureTime - lastTimestamp) / (60 * 60 * 1000) + ' hours',
+        valueDiff: futureValue - currentValue
+    });
+    
+    console.log('Regression calculation:', {
+        normalizedPoints: points,
+        rawPoints: xValues.map((x, i) => [x, yValues[i]]),
+        m: regression.m,
+        b: regression.b,
+        currentValue: regressionLine(Date.now()),
+        futureValue: regressionLine(futureTime),
+        lastTime: new Date(lastTime).toISOString(),
+        futureTime: new Date(futureTime).toISOString()
     });
 
     // Update prediction info
@@ -186,10 +385,23 @@ function updatePlot(regression = null, regressionLine = null) {
         const minTime = Math.min(...times);
         const maxTime = Math.max(...times);
         
-        // Add padding (2 hours before and after)
-        const paddingTime = 2 * 60 * 60 * 1000;
+        // Add padding and future time for predictions
+        const paddingTime = 2 * 60 * 60 * 1000; // 2 hours padding
+        const futureTime = regression ? (24 * 60 * 60 * 1000) : 0; // 24 hours for predictions
+        
+        // Calculate domain with proper padding and future time
         domainStart = new Date(minTime - paddingTime);
-        domainEnd = new Date(maxTime + (regression ? 24 * 60 * 60 * 1000 : 0) + paddingTime);
+        domainEnd = new Date(maxTime + futureTime + paddingTime);
+        
+        console.log('Domain calculations:', {
+            start: domainStart.toISOString(),
+            end: domainEnd.toISOString(),
+            minTime: new Date(minTime).toISOString(),
+            maxTime: new Date(maxTime).toISOString(),
+            includesFuture: regression,
+            paddingHours: paddingTime / (60 * 60 * 1000),
+            futureHours: regression ? 24 : 0
+        });
     }
     
     const spec = {
@@ -257,58 +469,107 @@ function updatePlot(regression = null, regressionLine = null) {
         const numSamples = 1000; // Increased for even smoother interaction
         const timeIncrement = (futureTime - firstTime) / numSamples;
         
+        console.log('Regression data generation:', {
+            firstTime: new Date(firstTime).toISOString(),
+            lastTime: new Date(lastTime).toISOString(),
+            futureTime: new Date(futureTime).toISOString(),
+            timeIncrement,
+            timeIncrementHours: timeIncrement / (60 * 60 * 1000)
+        });
+        
+        // Generate regression data points
         const regressionData = [];
+        let validPoints = 0;
+        let invalidPoints = 0;
+        
         for (let i = 0; i <= numSamples; i++) {
             const t = firstTime + i * timeIncrement;
-            // Calculate predicted value using actual timestamp
-            const predicted = regressionLine ? regressionLine(t) : 0;
+            const predicted = regressionLine(t);
             const validDate = new Date(t);
             
-            // Ensure date is valid before adding to regression data
-            if (!isNaN(validDate.getTime())) {
+            // Only add point if both date and prediction are valid
+            if (predicted !== null && !isNaN(validDate.getTime())) {
                 regressionData.push({
                     time: validDate.toISOString(),
                     predicted: predicted
                 });
+                validPoints++;
+            } else {
+                invalidPoints++;
             }
         }
+        
+        // Verify we have enough valid points for regression line
+        if (regressionData.length < 2) {
+            console.error('Not enough valid regression points generated');
+            return;
+        }
+        
+        // Debug: Log regression data details
+        console.log('Generated regression points:', {
+            validPoints,
+            invalidPoints,
+            totalPoints: regressionData.length,
+            expectedPoints: numSamples + 1,
+            firstPoint: regressionData[0],
+            lastPoint: regressionData[regressionData.length - 1],
+            timeRange: {
+                start: new Date(firstTime).toISOString(),
+                end: new Date(futureTime).toISOString(),
+                hours: (futureTime - firstTime) / (60 * 60 * 1000)
+            }
+        });
 
         // Add regression visualization with custom hover interaction
         const regressionLayer = {
-            "data": {"values": regressionData},
-            "layer": [
-                {
-                    "mark": {"type": "line", "color": "red", "strokeWidth": 3},
-                    "encoding": {
-                        "x": {
-                            "field": "time",
-                            "type": "temporal",
-                            "scale": {
-                                "type": "utc",
-                                "domain": [
-                                    domainStart.toISOString(),
-                                    domainEnd.toISOString()
-                                ],
-                                "nice": "hour",
-                                "zoom": true
-                            }
-                        },
-                        "y": {
-                            "field": "predicted",
-                            "type": "quantitative",
-                            "scale": {
-                                "zoom": true,
-                                "nice": true
-                            }
-                        },
-                        "tooltip": [
-                            {"field": "time", "type": "temporal", "title": "Time"},
-                            {"field": "predicted", "type": "quantitative", "title": "Predicted Value"}
-                        ]
+            "data": {
+                "values": regressionData
+            },
+            "mark": {
+                "type": "line",
+                "color": "red",
+                "strokeWidth": 2,
+                "tooltip": true
+            },
+            "encoding": {
+                "x": {
+                    "field": "time",
+                    "type": "temporal",
+                    "title": "Time",
+                    "scale": {
+                        "type": "utc",
+                        "domain": [
+                            domainStart.toISOString(),
+                            domainEnd.toISOString()
+                        ],
+                        "nice": "hour",
+                        "zoom": true
                     }
-                }
-            ]
+                },
+                "y": {
+                    "field": "predicted",
+                    "type": "quantitative",
+                    "title": "Predicted Value",
+                    "scale": {"zoom": true}
+                },
+                "tooltip": [
+                    {"field": "time", "type": "temporal", "title": "Time", "format": "%Y-%m-%d %H:%M"},
+                    {"field": "predicted", "type": "quantitative", "title": "Predicted Value", "format": ".2f"}
+                ]
+            }
         };
+        console.log('Layer configuration:', {
+            mainLayer: {
+                x: spec.layer[0].encoding.x,
+                y: spec.layer[0].encoding.y
+            },
+            regressionLayer: {
+                x: regressionLayer.layer[0].encoding.x,
+                y: regressionLayer.layer[0].encoding.y
+            },
+            regressionData: regressionData.slice(0, 3)
+        });
+        
         spec.layer.push(regressionLayer);
     }
 
