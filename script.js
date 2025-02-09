@@ -283,13 +283,28 @@ function updatePlot(regression = null, regressionLine = null) {
                         "x": {
                             "field": "time",
                             "type": "temporal",
-                            "scale": {"zoom": true}
+                            "scale": {
+                                "type": "utc",
+                                "domain": [
+                                    domainStart.toISOString(),
+                                    domainEnd.toISOString()
+                                ],
+                                "nice": "hour",
+                                "zoom": true
+                            }
                         },
                         "y": {
                             "field": "predicted",
                             "type": "quantitative",
-                            "scale": {"zoom": true}
-                        }
+                            "scale": {
+                                "zoom": true,
+                                "nice": true
+                            }
+                        },
+                        "tooltip": [
+                            {"field": "time", "type": "temporal", "title": "Time"},
+                            {"field": "predicted", "type": "quantitative", "title": "Predicted Value"}
+                        ]
                     }
                 }
             ]
@@ -297,59 +312,10 @@ function updatePlot(regression = null, regressionLine = null) {
         spec.layer.push(regressionLayer);
     }
 
-    // Render plot and set up hover interaction
+    // Render plot with built-in hover interaction
     vegaEmbed('#plot', spec, {
         actions: false,
         renderer: 'svg',
         hover: true
-    }).then(() => {
-        if (regression && regressionLine) {
-            const plotArea = document.querySelector('.marks');
-            const rect = plotArea.getBoundingClientRect();
-            const tooltip = document.getElementById('custom-tooltip');
-            const firstTime = timeSeriesData[0].time;
-            const lastTime = timeSeriesData[timeSeriesData.length - 1].time;
-            const futureTime = lastTime + (24 * 60 * 60 * 1000);
-            
-            // Calculate domain range for time interpolation
-            const times = timeSeriesData.map(d => d.time);
-            const minTime = Math.min(...times);
-            const maxTime = Math.max(...times);
-            const paddingTime = 2 * 60 * 60 * 1000; // 2 hours padding
-            const domainStart = new Date(minTime - paddingTime).getTime();
-            const domainEnd = new Date(maxTime + (24 * 60 * 60 * 1000) + paddingTime).getTime();
-            
-            console.log('Time domain:', {
-                start: new Date(domainStart).toLocaleString(),
-                end: new Date(domainEnd).toLocaleString(),
-                range: (domainEnd - domainStart) / (60 * 60 * 1000) + ' hours'
-            });
-            
-            plotArea.addEventListener('mousemove', (event) => {
-                const x = event.clientX - rect.left;
-                const xScale = (x / rect.width);
-                
-                if (xScale >= 0 && xScale <= 1) {
-                    const timeRange = domainEnd - domainStart;
-                    const currentTime = domainStart + (timeRange * xScale);
-                    const predictedValue = regressionLine(currentTime);
-                    
-                    tooltip.style.display = 'block';
-                    tooltip.style.left = (event.clientX + 10) + 'px';
-                    tooltip.style.top = (event.clientY + 10) + 'px';
-                    tooltip.textContent = `Time: ${new Date(currentTime).toLocaleString()}\nPredicted: ${predictedValue.toFixed(2)}`;
-                    
-                    console.log('Hover position:', {
-                        xPercent: (xScale * 100).toFixed(1) + '%',
-                        time: new Date(currentTime).toLocaleString(),
-                        value: predictedValue.toFixed(2)
-                    });
-                }
-            });
-            
-            plotArea.addEventListener('mouseleave', () => {
-                tooltip.style.display = 'none';
-            });
-        }
     });
 }
