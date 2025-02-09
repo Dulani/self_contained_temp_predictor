@@ -287,7 +287,8 @@ document.getElementById('add-data').addEventListener('click', () => {
     
     // Format next date string using our helper function
     const nextDateString = formatDateForInput(nextDate);
-    document.getElementById('datetime').value = nextDateString;
+    datetimeInput.value = nextDateString;
+    datetimeInput.setAttribute('value', nextDateString);
     
     console.log('Next data point setup:', {
         currentDate: utcDate.toISOString(),
