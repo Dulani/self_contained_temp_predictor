@@ -560,16 +560,21 @@ document.getElementById('predict').addEventListener('click', () => {
     };
     
     // Calculate future value (24 hours ahead)
-    const futureTime = lastTimestamp + (24 * 60 * 60 * 1000); // 24 hours in milliseconds
+    const futureTime = timeSeriesData[timeSeriesData.length - 1].time + (24 * 60 * 60 * 1000); // 24 hours in milliseconds
     const futureValue = regressionLine(futureTime);
     
     // Verify regression calculation is working
-    const currentValue = regressionLine(lastTimestamp);
+    const lastDataTime = timeSeriesData[timeSeriesData.length - 1].time;
+    const currentValue = regressionLine(lastDataTime);
     console.log('Regression verification:', {
         currentValue,
         futureValue,
-        timeDiff: (futureTime - lastTimestamp) / (60 * 60 * 1000) + ' hours',
-        valueDiff: futureValue - currentValue
+        timeDiff: (futureTime - lastDataTime) / (60 * 60 * 1000) + ' hours',
+        valueDiff: futureValue - currentValue,
+        timestamps: {
+            current: new Date(lastDataTime).toISOString(),
+            future: new Date(futureTime).toISOString()
+        }
     });
     
     console.log('Regression calculation:', {
@@ -577,10 +582,12 @@ document.getElementById('predict').addEventListener('click', () => {
         rawPoints: xValues.map((x, i) => [x, yValues[i]]),
         m: regression.m,
         b: regression.b,
-        currentValue: regressionLine(Date.now()),
+        currentValue: regressionLine(lastDataTime),
         futureValue: regressionLine(futureTime),
-        lastTime: new Date(lastTime).toISOString(),
-        futureTime: new Date(futureTime).toISOString()
+        timestamps: {
+            current: new Date(lastDataTime).toISOString(),
+            future: new Date(futureTime).toISOString()
+        }
     });
 
     // Update prediction info
@@ -709,8 +716,8 @@ function updatePlot(regression = null, regressionLine = null) {
         // Use timestamps from regression calculation for consistency
         const times = timeSeriesData.map(d => d.time);
         const firstTime = Math.min(...times);
-        const lastTime = Math.max(...times);
-        const futureTime = lastTime + (24 * 60 * 60 * 1000);
+        const lastDataTime = Math.max(...times);
+        const futureTime = lastDataTime + (24 * 60 * 60 * 1000);
         
         const numSamples = 1000; // Increased for even smoother interaction
         const timeIncrement = (futureTime - firstTime) / numSamples;
