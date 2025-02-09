@@ -157,16 +157,17 @@ document.getElementById('add-data').addEventListener('click', () => {
     document.getElementById('value').value = '';
     
     // Calculate next date using UTC to maintain consistency
-    const nextDate = new Date(date.getTime() + 15 * 60 * 1000);
-    const nextYear = nextDate.getUTCFullYear();
-    const nextMonth = String(nextDate.getUTCMonth() + 1).padStart(2, '0');
-    const nextDay = String(nextDate.getUTCDate()).padStart(2, '0');
-    const nextHours = String(nextDate.getUTCHours()).padStart(2, '0');
-    const nextMinutes = String(nextDate.getUTCMinutes()).padStart(2, '0');
+    const nextDate = new Date(utcDate.getTime() + 15 * 60 * 1000);
     
-    // Format next date string in YYYY-MM-DDTHH:mm format
-    const nextDateString = `${nextYear}-${nextMonth}-${nextDay}T${nextHours}:${nextMinutes}`;
+    // Format next date string using our helper function
+    const nextDateString = formatDateForInput(nextDate);
     document.getElementById('datetime').value = nextDateString;
+    
+    console.log('Next data point setup:', {
+        currentDate: utcDate.toISOString(),
+        nextDate: nextDate.toISOString(),
+        formattedString: nextDateString
+    });
     
     console.log('Data point added:', {
         currentPoints: timeSeriesData.map(d => ({
