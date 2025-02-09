@@ -197,6 +197,13 @@ function updatePlot(regression = null, regressionLine = null) {
         "width": "container",
         "height": 300,
         "usermeta": {"embedOptions": {"actions": false}},
+        "params": [
+            {
+                "name": "grid",
+                "select": "interval",
+                "bind": "scales"
+            }
+        ],
         "layer": [
             {
                 "data": {
@@ -221,13 +228,15 @@ function updatePlot(regression = null, regressionLine = null) {
                                 domainStart.toISOString(),
                                 domainEnd.toISOString()
                             ],
-                            "nice": "hour"
+                            "nice": "hour",
+                            "zoom": true
                         }
                     },
                     "y": {
                         "field": "value",
                         "type": "quantitative",
-                        "title": "Value"
+                        "title": "Value",
+                        "scale": {"zoom": true}
                     },
                     "tooltip": [
                         {"field": "time", "type": "temporal", "title": "Time"},
@@ -271,8 +280,16 @@ function updatePlot(regression = null, regressionLine = null) {
                 {
                     "mark": {"type": "line", "color": "red", "strokeWidth": 3},
                     "encoding": {
-                        "x": {"field": "time", "type": "temporal"},
-                        "y": {"field": "predicted", "type": "quantitative"}
+                        "x": {
+                            "field": "time",
+                            "type": "temporal",
+                            "scale": {"zoom": true}
+                        },
+                        "y": {
+                            "field": "predicted",
+                            "type": "quantitative",
+                            "scale": {"zoom": true}
+                        }
                     }
                 }
             ]
@@ -281,7 +298,11 @@ function updatePlot(regression = null, regressionLine = null) {
     }
 
     // Render plot and set up hover interaction
-    vegaEmbed('#plot', spec, {actions: false}).then(() => {
+    vegaEmbed('#plot', spec, {
+        actions: false,
+        renderer: 'svg',
+        hover: true
+    }).then(() => {
         if (regression && regressionLine) {
             const plotArea = document.querySelector('.marks');
             const rect = plotArea.getBoundingClientRect();
