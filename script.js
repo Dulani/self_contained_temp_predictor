@@ -45,14 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateString = formatDateForInput(initialDate);
     
     // Initialize datetime input with current value
-    const datetimeInput = document.querySelector('input[type="datetime-local"]');
+    const datetimeInput = document.getElementById('datetime');
     if (!datetimeInput) {
         console.error('Could not find datetime input');
         return;
     }
     
     // Set initial value and constraints
-    datetimeInput.value = dateString;
+    datetimeInput.setAttribute('value', dateString);  // Set value attribute
+    datetimeInput.value = dateString;                // Set value property
     datetimeInput.min = '1970-01-01T00:00';
     datetimeInput.max = '2999-12-31T23:59';
     
@@ -108,15 +109,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add data point
 document.getElementById('add-data').addEventListener('click', () => {
-    // Get datetime input by querying for datetime-local type since ID might be missing
-    const datetimeInput = document.querySelector('input[type="datetime-local"]');
+    // Get datetime input using ID
+    const datetimeInput = document.getElementById('datetime');
     const datetime = datetimeInput.value;  // Always use value property for form inputs
     const value = parseFloat(document.getElementById('value').value);
 
     // Log input state for debugging
     console.log('Add data point clicked:', {
-        datetime,
-        value,
+        rawInput: {
+            datetime,
+            value,
+            inputElement: {
+                value: datetimeInput.value,
+                type: datetimeInput.type,
+                min: datetimeInput.min,
+                max: datetimeInput.max
+            }
+        },
         currentTimeSeriesData: timeSeriesData.map(d => ({
             time: new Date(d.time).toISOString(),
             value: d.value
