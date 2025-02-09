@@ -139,10 +139,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add data point
 document.getElementById('add-data').addEventListener('click', () => {
-    // Get datetime input using ID
-    const datetimeInput = document.getElementById('datetime');
-    const datetime = datetimeInput.value;  // Always use value property for form inputs
+    // Get datetime input using querySelector for more reliable selection
+    const datetimeInput = document.querySelector('.datetime-input');
+    if (!datetimeInput) {
+        console.error('Could not find datetime input');
+        return;
+    }
+    
+    // Get input values directly when button is clicked
+    const datetime = datetimeInput.value;
     const value = parseFloat(document.getElementById('value').value);
+    
+    console.log('Add data point clicked:', {
+        datetimeInput: {
+            element: datetimeInput,
+            value: datetime,
+            attributes: Array.from(datetimeInput.attributes).map(attr => ({
+                name: attr.name,
+                value: attr.value
+            }))
+        },
+        valueInput: value
+    });
 
     // Log input state for debugging
     console.log('Add data point clicked:', {
