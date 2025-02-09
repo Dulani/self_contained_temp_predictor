@@ -171,13 +171,37 @@ document.getElementById('add-data').addEventListener('click', () => {
         }
     });
     
-    timeSeriesData.push({
+    // Add new data point
+    const newPoint = {
         time: timestamp,
         value: Number(value)
+    };
+    
+    console.log('Adding new point:', {
+        point: newPoint,
+        existingPoints: timeSeriesData.map(d => ({
+            time: new Date(d.time).toISOString(),
+            value: d.value
+        }))
     });
+    
+    timeSeriesData.push(newPoint);
 
     // Sort data by time
     timeSeriesData.sort((a, b) => a.time - b.time);
+    
+    console.log('Updated time series:', {
+        points: timeSeriesData.map(d => ({
+            time: new Date(d.time).toISOString(),
+            value: d.value
+        })),
+        count: timeSeriesData.length,
+        timeRange: timeSeriesData.length > 1 ? {
+            start: new Date(Math.min(...timeSeriesData.map(d => d.time))).toISOString(),
+            end: new Date(Math.max(...timeSeriesData.map(d => d.time))).toISOString(),
+            hours: (Math.max(...timeSeriesData.map(d => d.time)) - Math.min(...timeSeriesData.map(d => d.time))) / (60 * 60 * 1000)
+        } : null
+    });
 
     // Save to localStorage
     localStorage.setItem('timeSeriesData', JSON.stringify(timeSeriesData));
