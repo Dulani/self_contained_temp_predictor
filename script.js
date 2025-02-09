@@ -89,16 +89,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add data point
 document.getElementById('add-data').addEventListener('click', () => {
-    const datetime = document.getElementById('datetime').value;
+    const datetimeInput = document.getElementById('datetime');
+    const datetime = datetimeInput.value;
     const value = parseFloat(document.getElementById('value').value);
+    
+    console.log('Add data point clicked:', {
+        rawDatetime: datetime,
+        inputElement: {
+            value: datetimeInput.value,
+            defaultValue: datetimeInput.defaultValue,
+            type: datetimeInput.type
+        }
+    });
 
     if (!datetime || isNaN(value)) {
         alert('Please enter both date/time and value');
         return;
     }
 
-    // Parse and validate date
-    const datetimeInput = document.getElementById('datetime');
+    // Parse and validate date using existing datetimeInput variable
     const inputValue = datetimeInput.value;
     
     const [datePart, timePart] = inputValue.split('T');
